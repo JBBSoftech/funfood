@@ -67,13 +67,10 @@ class CartItem {
   
   double get effectivePrice => discountPrice > 0 ? discountPrice : price;
   double get totalPrice => effectivePrice * quantity;
-  double get originalTotalPrice => price * quantity;
-  double get discountAmount => (price - effectivePrice) * quantity;
 }
 
 // Cart manager
 class CartManager extends ChangeNotifier {
-  static const double gstRate = 8.0;
   final List<CartItem> _items = [];
   
   List<CartItem> get items => List.unmodifiable(_items);
@@ -106,21 +103,6 @@ class CartManager extends ChangeNotifier {
   
   double get subtotal {
     return _items.fold(0.0, (sum, item) => sum + item.totalPrice);
-  }
-  
-  // Get original subtotal before any discounts
-  double get originalSubtotal {
-    return _items.fold(0.0, (sum, item) => sum + item.originalTotalPrice);
-  }
-  
-  // Calculate total discount amount
-  double get totalDiscount {
-    return _items.fold(0.0, (sum, item) => sum + item.discountAmount);
-  }
-  
-  // Calculate GST amount
-  double get gstAmount {
-    return PriceUtils.calculateTax(subtotal, gstRate);
   }
   
   double get totalWithTax {
@@ -352,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                         
                         const SizedBox(width: 8),
                         Text(
-                          'Funfood',
+                          'Funfoods',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -677,27 +659,34 @@ class _HomePageState extends State<HomePage> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 4),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                          Row(
                                             children: [
-                                              // Current/Final Price (always without strikethrough)
-                                              Text(
-                                                                                                product['price'] ?? '$0'
-                                                ,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.blue,
-                                                ),
-                                              ),
-                                              // Original Price (if discount exists)
-                                                                                            if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty)
+                                                                                            // Show discount price if exists, otherwise show original price
+                                              if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty) ...[
                                                 Text(
                                                   product['discountPrice'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.green,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  product['price'] ?? '',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     decoration: TextDecoration.lineThrough,
                                                     color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                              ] else
+                                                Text(
+                                                  product['price'] ?? '$0',
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
                                                   ),
                                                 ),
                                               
@@ -726,14 +715,10 @@ class _HomePageState extends State<HomePage> {
                                                 final cartItem = CartItem(
                                                   id: productId,
                                                   name: product['productName'] ?? 'Product',
-                                                  price:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
+                                                  price: PriceUtils.parsePrice(product['price'] ?? '0'),
+                                                  discountPrice: product['discountPrice'] != null && product['discountPrice'].isNotEmpty
                                                       ? PriceUtils.parsePrice(product['discountPrice'])
-                                                      : PriceUtils.parsePrice(product['price'] ?? '0')
-                                                  ,
-                                                  discountPrice:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
-                                                      ? PriceUtils.parsePrice(product['discountPrice'])
-                                                      : 0.0
-                                                  ,
+                                                      : 0.0,
                                                   image: product['imageAsset'],
                                                 );
                                                 _cartManager.addItem(cartItem);
