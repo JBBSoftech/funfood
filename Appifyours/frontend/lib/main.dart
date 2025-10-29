@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                         
                         const SizedBox(width: 8),
                         Text(
-                          'Funfood',
+                          'Funfoods',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -410,20 +410,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         TextField(
                           onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value;
-                              if (value.isEmpty) {
-                                _filteredProducts = List.from(productCards);
-                              } else {
-                                _filteredProducts = productCards.where((product) {
-                                  final productName = (product['productName'] ?? '').toString().toLowerCase();
-                                  final price = (product['price'] ?? '').toString().toLowerCase();
-                                  final discountPrice = (product['discountPrice'] ?? '').toString().toLowerCase();
-                                  final searchLower = value.toLowerCase();
-                                  return productName.contains(searchLower) || price.contains(searchLower) || discountPrice.contains(searchLower);
-                                }).toList();
-                              }
-                            });
+                            _filterProducts(value);
                           },
                           decoration: InputDecoration(
                             hintText: 'Search products by name or price',
@@ -548,9 +535,25 @@ class _HomePageState extends State<HomePage> {
                             crossAxisSpacing: 12,
                             childAspectRatio: 0.75,
                           ),
-                          itemCount: 3,
+                          itemCount:                           _searchQuery.isEmpty 
+                              ? productCards.length 
+                              : productCards.where((product) {
+                                  final productName = (product['productName'] ?? '').toString().toLowerCase();
+                                  final price = (product['price'] ?? '').toString().toLowerCase();
+                                  final discountPrice = (product['discountPrice'] ?? '').toString().toLowerCase();
+                                  return productName.contains(_searchQuery) || price.contains(_searchQuery) || discountPrice.contains(_searchQuery);
+                                }).length,
                           itemBuilder: (context, index) {
-                            final product = productCards[index];
+                            final filteredProducts =                             _searchQuery.isEmpty 
+                                ? productCards 
+                                : productCards.where((product) {
+                                    final productName = (product['productName'] ?? '').toString().toLowerCase();
+                                    final price = (product['price'] ?? '').toString().toLowerCase();
+                                    final discountPrice = (product['discountPrice'] ?? '').toString().toLowerCase();
+                                    return productName.contains(_searchQuery) || price.contains(_searchQuery) || discountPrice.contains(_searchQuery);
+                                  }).toList();
+                            if (index >= filteredProducts.length) return const SizedBox();
+                            final product = filteredProducts[index];
                             final productId = 'product_$index';
                             final isInWishlist = _wishlistManager.isInWishlist(productId);
                             return Card(
@@ -656,35 +659,27 @@ class _HomePageState extends State<HomePage> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 4),
-                                          Row(
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
+                                              // Current/Final Price (always without strikethrough)
                                               Text(
-                                                PriceUtils.formatPrice(
-                                                                                                    product['discountPrice'] != null && product['discountPrice'].isNotEmpty
-                                                      ? PriceUtils.parsePrice(product['discountPrice'])
-                                                      : PriceUtils.parsePrice(product['price'] ?? '0')
-                                                  ,
-                                                  currency:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
-                                                      ? PriceUtils.detectCurrency(product['discountPrice'])
-                                                      : PriceUtils.detectCurrency(product['price'] ?? '\$0')
-                                                  
-                                                ),
-                                                style: TextStyle(
+                                                                                                product['price'] ?? '$0'
+                                                ,
+                                                style: const TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.bold,
-                                                  color: product['discountPrice'] != null ? Colors.blue : Colors.black,
+                                                  color: Colors.blue,
                                                 ),
                                               ),
-                                                                                            if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty && product['price'] != null)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(left: 6.0),
-                                                  child: Text(
-                                                    PriceUtils.formatPrice(PriceUtils.parsePrice(product['price'] ?? '0'), currency: PriceUtils.detectCurrency(product['price'] ?? '\$0')),
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      decoration: TextDecoration.lineThrough,
-                                                      color: Colors.grey.shade600,
-                                                    ),
+                                              // Original Price (if discount exists)
+                                                                                            if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty)
+                                                Text(
+                                                  product['discountPrice'] ?? '',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    decoration: TextDecoration.lineThrough,
+                                                    color: Colors.grey.shade600,
                                                   ),
                                                 ),
                                               
@@ -1183,39 +1178,61 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          children: [            const Text(
-              'User Profile',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter your name',
+          children: [            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'John Doe',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(250, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      // Refund button action
+                    },
+                    child: const Text(
+                      'Refund',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(250, 50),
+                      side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      // Log Out button action
+                    },
+                    child: const Text(
+                      'Log Out',
+                      style: TextStyle(fontSize: 18, color: Colors.black),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-              ),
-            ),
-            const SizedBox(height: 12),
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Phone',
-                hintText: 'Enter your phone number',
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile saved')),
-                );
-              },
-              child: const Text('Save Profile'),
             ),          ],
         ),
       ),
