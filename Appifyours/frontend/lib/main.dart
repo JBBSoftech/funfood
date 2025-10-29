@@ -413,7 +413,7 @@ class _HomePageState extends State<HomePage> {
                             _filterProducts(value);
                           },
                           decoration: InputDecoration(
-                            hintText: 'Search products by name or price',
+                            hintText: 'Search product',
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: const Icon(Icons.filter_list),
                             border: OutlineInputBorder(
