@@ -659,34 +659,27 @@ class _HomePageState extends State<HomePage> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 4),
-                                          Row(
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                                                                            // Show discount price if exists, otherwise show original price
-                                              if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty) ...[
+                                              // Current/Final Price (always without strikethrough)
+                                              Text(
+                                                                                                product['price'] ?? '$0'
+                                                ,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue,
+                                                ),
+                                              ),
+                                              // Original Price (if discount exists)
+                                                                                            if (product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty)
                                                 Text(
                                                   product['discountPrice'] ?? '',
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.green,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  product['price'] ?? '',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     decoration: TextDecoration.lineThrough,
                                                     color: Colors.grey.shade600,
-                                                  ),
-                                                ),
-                                              ] else
-                                                Text(
-                                                  product['price'] ?? '$0',
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.blue,
                                                   ),
                                                 ),
                                               
@@ -715,10 +708,14 @@ class _HomePageState extends State<HomePage> {
                                                 final cartItem = CartItem(
                                                   id: productId,
                                                   name: product['productName'] ?? 'Product',
-                                                  price: PriceUtils.parsePrice(product['price'] ?? '0'),
-                                                  discountPrice: product['discountPrice'] != null && product['discountPrice'].isNotEmpty
+                                                  price:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
                                                       ? PriceUtils.parsePrice(product['discountPrice'])
-                                                      : 0.0,
+                                                      : PriceUtils.parsePrice(product['price'] ?? '0')
+                                                  ,
+                                                  discountPrice:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
+                                                      ? PriceUtils.parsePrice(product['discountPrice'])
+                                                      : 0.0
+                                                  ,
                                                   image: product['imageAsset'],
                                                 );
                                                 _cartManager.addItem(cartItem);
