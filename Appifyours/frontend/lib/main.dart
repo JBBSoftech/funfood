@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                         
                         const SizedBox(width: 8),
                         Text(
-                          'Funfoods',
+                          'Funfoodss',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -931,6 +931,70 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Order Summary',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Subtotal', style: TextStyle(fontSize: 12)),
+                                    Text(PriceUtils.formatPrice(0), style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Shipping', style: TextStyle(fontSize: 12)),
+                                    Text(PriceUtils.formatPrice(5.99), style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Tax (8%)', style: TextStyle(fontSize: 12)),
+                                    Text(PriceUtils.formatPrice(PriceUtils.calculateTax(0, 8.0)), style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                                
+                                const Divider(),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      'Total',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                    ),
+                                    Text(
+                                      PriceUtils.formatPrice(5.99),
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -945,7 +1009,10 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Shopping Cart'),
         automaticallyImplyLeading: false,
       ),
-      body: _cartManager.items.isEmpty
+      body: ListenableBuilder(
+        listenable: _cartManager,
+        builder: (context, child) {
+          return _cartManager.items.isEmpty
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1047,8 +1114,130 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
+                // Bill Summary Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Bill Summary',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Subtotal:', style: TextStyle(fontSize: 16)),
+                          Text(
+                            PriceUtils.formatPrice(_cartManager.subtotal),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Discount (0.0%):', 
+                               style: const TextStyle(fontSize: 16)),
+                          Text(
+                            '- $0.00',
+                            style: const TextStyle(fontSize: 16, color: Colors.green),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Price after Discount:', style: TextStyle(fontSize: 16)),
+                          Text(
+                            PriceUtils.formatPrice(_cartManager.priceAfterDiscount),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('GST (18.0%):', 
+                               style: const TextStyle(fontSize: 16)),
+                          Text(
+                            '+ $0.00',
+                            style: const TextStyle(fontSize: 16, color: Colors.orange),
+                          ),
+                        ],
+                      ),
+                      const Divider(thickness: 2),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Bill Price:',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            PriceUtils.formatPrice(_cartManager.totalBillPrice),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Discount and GST input controls
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Discount %',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                final discount = double.tryParse(value) ?? 0.0;
+                                _cartManager.setDiscountPercentage(discount);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'GST %',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              keyboardType: TextInputType.number,
+                              controller: TextEditingController(text: _cartManager.gstPercentage.toString()),
+                              onChanged: (value) {
+                                final gst = double.tryParse(value) ?? 18.0;
+                                _cartManager.setGstPercentage(gst);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+            );
+        },
+      ),
     );
   }
 
