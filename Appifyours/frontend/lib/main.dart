@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage> {
                         
                         const SizedBox(width: 8),
                         Text(
-                          'Funfood',
+                          'Funfoods',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -708,11 +708,8 @@ class _HomePageState extends State<HomePage> {
                                                 final cartItem = CartItem(
                                                   id: productId,
                                                   name: product['productName'] ?? 'Product',
-                                                  price:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
-                                                      ? PriceUtils.parsePrice(product['discountPrice'])
-                                                      : PriceUtils.parsePrice(product['price'] ?? '0')
-                                                  ,
-                                                  discountPrice:                                                   product['discountPrice'] != null && product['discountPrice'].isNotEmpty
+                                                  price: PriceUtils.parsePrice(product['price'] ?? '0'),
+                                                  discountPrice:                                                   product['discountPrice'] != null && product['discountPrice'].toString().isNotEmpty
                                                       ? PriceUtils.parsePrice(product['discountPrice'])
                                                       : 0.0
                                                   ,
@@ -1000,7 +997,25 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    Text(PriceUtils.formatPrice(item.effectivePrice)),
+                                    // Show current price (effective price)
+                                    Text(
+                                      PriceUtils.formatPrice(item.effectivePrice),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                    // Show original price if there's a discount
+                                    if (item.discountPrice > 0 && item.price != item.discountPrice)
+                                      Text(
+                                        PriceUtils.formatPrice(item.price),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          decoration: TextDecoration.lineThrough,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -1030,56 +1045,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                       );
                     },
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    border: const Border(top: BorderSide(color: Colors.grey)),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Subtotal:', style: TextStyle(fontSize: 16)),
-                          Text(PriceUtils.formatPrice(_cartManager.subtotal), style: const TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Tax (8%):', style: TextStyle(fontSize: 16)),
-                          Text(PriceUtils.formatPrice(PriceUtils.calculateTax(_cartManager.subtotal, 8.0)), style: const TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Shipping:', style: TextStyle(fontSize: 16)),
-                          Text(PriceUtils.formatPrice(5.99), style: const TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                      const Divider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text(PriceUtils.formatPrice(_cartManager.finalTotal), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          child: const Text('Checkout'),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
