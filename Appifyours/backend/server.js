@@ -216,7 +216,7 @@ app.get('/api/users/:id/orders', async (req, res) => {
     res.json({ success: true, data: user.orders });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
-  }
+  } 
 });
 
 // Get shop data from main database (dynamic data fetching)
