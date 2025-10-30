@@ -110,7 +110,20 @@ class CartManager extends ChangeNotifier {
     return subtotal + tax;
   }
   
+  double get totalDiscount {
+    return _items.fold(0.0, (sum, item) => 
+      sum + ((item.price - item.effectivePrice) * item.quantity));
+  }
+  
+  double get gstAmount {
+    return PriceUtils.calculateTax(subtotal, 18.0); // 18% GST
+  }
+  
   double get finalTotal {
+    return subtotal + gstAmount;
+  }
+  
+  double get finalTotalWithShipping {
     return PriceUtils.applyShipping(totalWithTax, 5.99); // $5.99 shipping
   }
 }
@@ -334,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                         
                         const SizedBox(width: 8),
                         Text(
-                          'Funfoodss',
+                          'Funfoods',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -953,7 +966,7 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text('Subtotal', style: TextStyle(fontSize: 12)),
-                                    Text(PriceUtils.formatPrice(0), style: TextStyle(fontSize: 12)),
+                                    Text(PriceUtils.formatPrice(79.97), style: TextStyle(fontSize: 12)),
                                   ],
                                 ),
                                 const SizedBox(height: 6),
@@ -969,7 +982,7 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text('Tax (8%)', style: TextStyle(fontSize: 12)),
-                                    Text(PriceUtils.formatPrice(PriceUtils.calculateTax(0, 8.0)), style: TextStyle(fontSize: 12)),
+                                    Text(PriceUtils.formatPrice(PriceUtils.calculateTax(79.97, 8.0)), style: TextStyle(fontSize: 12)),
                                   ],
                                 ),
                                 
@@ -983,7 +996,7 @@ class _HomePageState extends State<HomePage> {
                                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                     ),
                                     Text(
-                                      PriceUtils.formatPrice(5.99),
+                                      PriceUtils.formatPrice(0),
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                     ),
                                   ],
@@ -1013,16 +1026,16 @@ class _HomePageState extends State<HomePage> {
         listenable: _cartManager,
         builder: (context, child) {
           return _cartManager.items.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Your cart is empty', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                ],
-              ),
-            )
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('Your cart is empty', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                    ],
+                  ),
+                )
           : Column(
               children: [
                 Expanded(
@@ -1116,10 +1129,12 @@ class _HomePageState extends State<HomePage> {
                 ),
                 // Bill Summary Section
                 Container(
+                  margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
-                    border: Border(top: BorderSide(color: Colors.grey[300]!)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1129,107 +1144,51 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Subtotal:', style: TextStyle(fontSize: 16)),
-                          Text(
-                            PriceUtils.formatPrice(_cartManager.subtotal),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Subtotal', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                            Text(PriceUtils.formatPrice(_cartManager.subtotal), style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Discount (0.0%):', 
-                               style: const TextStyle(fontSize: 16)),
-                          Text(
-                            '- $0.00',
-                            style: const TextStyle(fontSize: 16, color: Colors.green),
+                      if (_cartManager.totalDiscount > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Discount', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                              Text('-$0.00', style: const TextStyle(fontSize: 14, color: Colors.green)),
+                            ],
                           ),
-                        ],
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('GST (18%)', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                            Text(PriceUtils.formatPrice(_cartManager.gstAmount), style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Price after Discount:', style: TextStyle(fontSize: 16)),
-                          Text(
-                            PriceUtils.formatPrice(_cartManager.priceAfterDiscount),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('GST (18.0%):', 
-                               style: const TextStyle(fontSize: 16)),
-                          Text(
-                            '+ $0.00',
-                            style: const TextStyle(fontSize: 16, color: Colors.orange),
-                          ),
-                        ],
-                      ),
-                      const Divider(thickness: 2),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total Bill Price:',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            PriceUtils.formatPrice(_cartManager.totalBillPrice),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Discount and GST input controls
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'Discount %',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                final discount = double.tryParse(value) ?? 0.0;
-                                _cartManager.setDiscountPercentage(discount);
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              decoration: const InputDecoration(
-                                labelText: 'GST %',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              ),
-                              keyboardType: TextInputType.number,
-                              controller: TextEditingController(text: _cartManager.gstPercentage.toString()),
-                              onChanged: (value) {
-                                final gst = double.tryParse(value) ?? 18.0;
-                                _cartManager.setGstPercentage(gst);
-                              },
-                            ),
-                          ),
-                        ],
+                      const Divider(thickness: 1),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                            Text(PriceUtils.formatPrice(_cartManager.finalTotal), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1428,6 +1387,7 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
 }
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
