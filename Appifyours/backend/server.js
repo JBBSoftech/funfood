@@ -219,6 +219,91 @@ app.get('/api/users/:id/orders', async (req, res) => {
   }
 });
 
+// Get shop data from main database (dynamic data fetching)
+app.get('/api/shop-data', async (req, res) => {
+  try {
+    const http = require('http');
+    const mainServerUrl = process.env.MAIN_SERVER_URL || 'http://localhost:3001';
+    const adminId = '6902176a312bc81a247cf58e';
+    
+    // Make request to main server to get shop data
+    const options = {
+      hostname: mainServerUrl.replace('http://', '').replace('https://', ''),
+      port: 3001,
+      path: `/shop-data/${adminId}`,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
+    
+    const request = http.request(options, (response) => {
+      let data = '';
+      
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          const shopData = JSON.parse(data);
+          if (shopData.success) {
+            // Store products in local database
+            const products = shopData.data.products || [];
+            
+            // Clear existing products and insert new ones
+            Product.deleteMany({}).then(() => {
+              const productPromises = products.map(product => {
+                const newProduct = new Product({
+                  name: product.name || product.productName,
+                  price: parseFloat(product.price) || 0,
+                  description: product.description || '',
+                  image: product.image,
+                  category: product.category || 'General',
+                  inStock: true
+                });
+                return newProduct.save();
+              });
+              
+              Promise.all(productPromises).then(() => {
+                res.json({
+                  success: true,
+                  data: {
+                    shopName: shopData.data.shopName,
+                    appName: shopData.data.appName,
+                    gstNumber: shopData.data.gstNumber,
+                    products: products,
+                    lastUpdated: shopData.data.lastUpdated
+                  }
+                });
+              }).catch(err => {
+                console.error('Error saving products:', err);
+                res.json({ success: true, data: shopData.data });
+              });
+            });
+          } else {
+            res.status(404).json({ success: false, error: 'Shop data not found' });
+          }
+        } catch (parseError) {
+          console.error('Error parsing shop data:', parseError);
+          res.status(500).json({ success: false, error: 'Failed to parse shop data' });
+        }
+      });
+    });
+    
+    request.on('error', (error) => {
+      console.error('Error fetching shop data:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch shop data from main server' });
+    });
+    
+    request.end();
+    
+  } catch (error) {
+    console.error('Error in shop-data endpoint:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Real-time configuration endpoint for mobile app updates
 app.get('/api/app-config', async (req, res) => {
   try {
